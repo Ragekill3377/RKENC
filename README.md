@@ -1,4 +1,4 @@
-# RKENC - Ragekill-Encrypt
+# RKENC
 
 **RKENC** is a lightweight AES encryption library.
 * It only requires cryptopp library.
@@ -21,7 +21,7 @@
 To use RKENC, you need to have the Crypto++ library installed. You can install it on **Ubuntu** using:
 
 ```bash
-sudo apt-get install libcryptopp-dev
+sudo apt-get install libcrypto++-dev
 ```
 
 For **Arch-Linux**:
