@@ -51,8 +51,9 @@ int main() {
 }
 ```
 # Output:
-Encrypted: G"��v��#B>��P������
-                              ��9�~Z��t��]�{E�._
+Encrypted: G"��v��#B>��P��������9�~Z��t��]�{E�._
+
+
 Decrypted: 42
 
 
