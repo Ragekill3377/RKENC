@@ -23,7 +23,6 @@ public:
         prng.GenerateBlock(iv, sizeof(iv));
     }
 
-    // converts any data type given to string
     template<typename T>
     std::string to_string(const T& data) {
         std::ostringstream oss;
@@ -31,7 +30,6 @@ public:
         return oss.str();
     }
 
-    // converts from string back to the data type
     template<typename T>
     T from_string(const std::string& str) {
         std::istringstream iss(str);
