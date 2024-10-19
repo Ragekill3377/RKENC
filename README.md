@@ -2,7 +2,7 @@
 
 **RKENC** is a lightweight AES encryption library.
 * It only requires cryptopp library.
-* Supports multiple data types. This is thanks to the ``to_string`` & ``from_string`` functions.
+* Supports multiple data types.
 - string, int, bool, double, float, long, uint32, char, wchar etc. are supported.
 
 # Platform:
