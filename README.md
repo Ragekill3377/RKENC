@@ -12,7 +12,6 @@
 ## Features
 
 - **AES Encryption** -> Cryptopp
-- **Multiple Encryption rounds** -> loop for encryption. default is 3. Encrypts thrice, decrypts thrice.
 - **Type Support** -> supports multiple data types.
 - **Lightweight** -> single header, which is less than 100 lines long, and easy to understand.
 
