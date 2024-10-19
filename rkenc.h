@@ -32,9 +32,7 @@ public:
 
     void ivgen() {
         CryptoPP::AutoSeededRandomPool prng;
-        prng.GenerateBlock(iv, sizeof(iv)); 
-        ivCounter++;
-        memcpy(iv, &ivCounter, sizeof(ivCounter));
+        prng.GenerateBlock(iv, sizeof(iv));
     }
 
     template<typename T>
@@ -125,7 +123,6 @@ public:
 private:
     CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH]; // AES key
     CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];          // IV
-    unsigned int ivCounter = 0;
 };
 
 }
