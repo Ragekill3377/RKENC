@@ -10,47 +10,114 @@
 #include <cryptopp/modes.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/hex.h>
-#include <type_traits>
+
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+#elif defined(__linux__)
+    #include <sys/ptrace.h>
+    #include <unistd.h>
+#elif defined(__APPLE__)
+    #include <sys/types.h>
+    #include <sys/ptrace.h>
+#endif
 
 namespace RKENC {
+
+/* Anti-Debug */
+void dbg_disable() {
+#if defined(_WIN32) || defined(_WIN64)
+    if (IsDebuggerPresent()) { // built-in func for windows. 'debugapi.h' header to be precise.
+        exit(1);               // If you want to check (for windows), that if a remote process is being debugged, use 'CheckRemoteDebuggerPresent' function. 
+    }
+#elif defined(__linux__) || defined(__APPLE__)
+    if (ptrace(PTRACE_TRACEME, 0, 1, 0) == -1) { // for unix based systems, you'll have to look for ptrace like this.
+        exit(1);
+    }
+#endif
+} // If debugger is present, crash. Very simple implementation, and this can be easily bypassed. Nothing is fool-proof.
+
+/* BEGIN C.T.O */
+// To be honest, This is probably the most useless component. 'Compile-Time-Obfuscation' is usally...shit.
+// You could remove this if you want, along with the obfuscate & deobfuscate calls.
+// The actual 'meat' of the program is the encryption.
+// This obfuscation is only going to deter skids and noobies. You could leave it here for them! (jk)
+
+constexpr unsigned int seed = 99999; // set this to whatever you want.
+
+constexpr unsigned int xorshift(unsigned int x) {
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    return x;
+}
+
+
+constexpr unsigned char genxorkey() {
+    return static_cast<unsigned char>(xorshift(seed) & 0xFF);
+}
+
+// Obfuscate each char
+constexpr void obfuscate_char(char* ptr, size_t index, unsigned char key) {
+    *ptr = *ptr ^ (key + index);
+}
+
+constexpr std::string obfuscate(const std::string& data) {
+    unsigned char key = genxorkey();
+    std::string obfuscated(data);
+
+    for (size_t i = 0; i < obfuscated.length(); ++i) {
+        char* ptr = &obfuscated[i];
+        obfuscate_char(ptr, i, key);
+    }
+
+    return obfuscated;
+}
+
+constexpr void deobfuscate_char(char* ptr, size_t index, unsigned char key) {
+    *ptr = *ptr ^ (key + index); 
+}
+
+constexpr std::string deobfuscate(const std::string& data) {
+    unsigned char key = genxorkey();
+    std::string deobfuscated(data);
+
+    for (size_t i = 0; i < deobfuscated.length(); ++i) {
+        char* ptr = &deobfuscated[i];
+        deobfuscate_char(ptr, i, key);
+    }
+
+    return deobfuscated;
+}
+
+/* END C.T.O */
 
 class AESCRYPT {
 public:
     AESCRYPT() {
-        CryptoPP::AutoSeededRandomPool prng;
+        
+        dbg_disable();
 
+        CryptoPP::AutoSeededRandomPool prng;
         prng.GenerateBlock(key, sizeof(key)); // auto gen key & iv
         prng.GenerateBlock(iv, sizeof(iv));
     }
-
-    
+    // these 2 funcs, to_string and from_string will allow us to work with multiple built-in data types. :)
     template<typename T>
     std::string to_string(const T& data) {
-        if constexpr (std::is_arithmetic_v<T>) {
-            return std::to_string(data);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            return data;
-        } else {
-            static_assert(!std::is_same_v<T, T>, "Unsupported type");
-        }
+        std::ostringstream oss;
+        oss << data;
+        return oss.str();
     }
 
-    
     template<typename T>
     T from_string(const std::string& str) {
-        if constexpr (std::is_arithmetic_v<T>) {
-            std::istringstream iss(str);
-            T data;
-            iss >> data;
-            return data;
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            return str;
-        } else {
-            static_assert(!std::is_same_v<T, T>, "Unsupported type");
-        }
+        std::istringstream iss(str);
+        T data;
+        iss >> data;
+        return data;
     }
-
-    // encrypt
+    // main components.
     template<typename T>
     std::string encrypt(const T& data) {
         std::string plaintext = to_string(data);
@@ -65,12 +132,13 @@ public:
         stfEncryptor.MessageEnd();
         ciphertext = temp;
 
-        return ciphertext;
+        return obfuscate(ciphertext);
     }
 
-    // decrypt
     template<typename T>
-    T decrypt(const std::string& ciphertext) {
+    T decrypt(const std::string& obfuscated_ciphertext) {
+        std::string ciphertext = deobfuscate(obfuscated_ciphertext);
+
         std::string decryptedtext = ciphertext;
 
         CryptoPP::AES::Decryption aesDecryption(key, sizeof(key));
@@ -86,8 +154,8 @@ public:
     }
 
 private:
-    CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH]; // aes key
-    CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];          // iv
+    CryptoPP::byte key[CryptoPP::AES::DEFAULT_KEYLENGTH]; // AES key
+    CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];          // IV
 };
 
 }
